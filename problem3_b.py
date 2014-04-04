@@ -1,31 +1,49 @@
+from __future__ import division
 import numpy as np
 import scipy as sp
 import numpy.linalg as la
+import scipy.optimize as opt
 import matplotlib.pyplot as plt
 
 t = np.array([0.0, 0.25, 0.5, 0.75, 1.00, 1.25, 1.5, 1.75, 2.0])
 y = np.array([20.0, 51.58, 68.73, 75.46, 74.36, 67.09, 54.73, 37.98, 17.28])
 
-tol = 10e-14
+def gaussNewton(f, Jac, Res, Nx, x, t, y):
+	tol = 10e-14
+	i = 0
+	error = 1
+	while error > tol:
+		J = Jac(x, t)
+		r = Res(x, t, y)
+		error = la.norm(r)
+		print r
+		print error
+		s = la.lstsq(np.copy(J), np.copy(-r))[0]
+		x = Nx(x, s)
+		if i > 500:
+			print "Error: Too many iterations"
+			break
+		else:
+			i += 1
+	return x
 
-np.random.seed(200)
-index = np.random.random_integers(0, len(x))
-x0 = x[index] + 0.01 * np.random.rand()
-y0 = y[index] + 0.01 * np.random.rand()
-R = la.norm((x0, y0))
+def model(x, t):
+    return x[0] + x[1]*t + x[2]*(t**2) + x[3]*np.exp(x[4]*t)
 
-# Gauss-Newton iteration
-error = 1.
-it = 0
-while error > tol:
-	d = map(la.norm, zip(x - x0, y - y0))
-	J = np.array([np.array([(x0 - xi)/di, (y0 - yi)/di, -1])
-		for xi, yi, di in zip(x, y, d)])
-	r = np.array([la.norm((xi - x0, yi - y0)) - R
-		for xi, yi in zip(x, y)])
-	b = np.dot(J.T, r); error = la.norm(b)
-	s = la.solve(np.dot(J.T, J), -b)
-	x0 += s[0]; y0 += s[1]; R += s[2]
-	it += 1
-print("Converged to tolerance in %d iterations"%it)
+def residual(x, t, y):
+    return model(x, t) - y
 
+def jac(x, t):
+    ans = np.empty((9,5))
+    ans[:,0] = 1
+    ans[:,1] = t
+    ans[:,2] = t**2
+    ans[:,3] = np.exp(x[4]*t)
+    ans[:,4] = x[3]*t*np.exp(x[4]*t)
+    return np.copy(ans)
+
+def next_x(x, s):
+	return x+s
+
+x0 = np.array([1, 0, 0, 1, 0])
+x = gaussNewton(model, jac, residual, next_x, np.copy(x0), np.copy(t), np.copy(y) )

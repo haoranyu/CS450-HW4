@@ -3,13 +3,19 @@ import numpy as np
 import numpy.linalg as la
 import matplotlib.pyplot as plt
 
+plt.rc("text", usetex=True)
+plt.rc("font", family="serif")
+
 def plot_init():
 	plt.clf()
-	plt.xlabel("k axis")
-	plt.ylabel("ri axis")
-	plt.title("Plot for Problem2 c)")
+	plt.xlabel(" n ")
+	plt.ylabel("Condition Number")
+	plt.title("Plot for Problem5 c)")
 	plt.hold(True)
-	plt.gca().set_aspect("equal")
+
+def plot_draw(X, Y, case):
+	plt.semilogy(X, Y, label="Case %s )" % case)
+	plt.legend(loc="best")
 
 def cond_a(n):
 	mesh_ac = np.linspace(-1, 1, n)
@@ -37,4 +43,29 @@ def cond_d(n):
 
 n_arr = (np.arange(20) + 1) * 5;
 
+a_result = np.ones(20)
+for i in range(20):
+	a_result[i] *= cond_a(np.copy(n_arr[i]))
 
+
+b_result = np.ones(20)
+for i in range(20):
+	b_result[i] *= cond_b(np.copy(n_arr[i]))
+
+
+c_result = np.ones(20)
+for i in range(20):
+	c_result[i] *= cond_c(np.copy(n_arr[i]))
+
+
+d_result = np.ones(20)
+for i in range(20):
+	d_result[i] *= cond_d(np.copy(n_arr[i]))
+
+
+plot_init()
+plot_draw(n_arr, a_result, 'a')
+plot_draw(n_arr, b_result, 'b')
+plot_draw(n_arr, c_result, 'c')
+plot_draw(n_arr, d_result, 'd')
+plt.savefig("problem5_c.png")
